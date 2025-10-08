@@ -1,65 +1,76 @@
-// Reducer function to manage global app state changes
-// Each "action" updates the state immutably (similar to Redux pattern)
+// =============================================
+// reducer.ts
+// ---------------------------------------------
+// This file defines the reducer function that handles
+// all state transitions in the StudyHelper app.
+//
+// The reducer follows React’s “useReducer” pattern —
+// given a current state and an action, it returns a new state.
+//
+// Actions handled:
+// 1. START_SESSION – begins tracking a new study session.
+// 2. STOP_SESSION – ends the current session and records its duration.
+// 3. LOAD_STATE – loads saved or default app data.
+//
+// =============================================
 
-import { StudySession, AppState, Subject } from '../types';
-import { v4 as uuidv4 } from 'uuid';
+import { AppState, Action } from '../types';
 
-// Define all possible actions that can modify state
-export type Action =
-  | { type: 'ADD_SUBJECT'; payload: Subject }
-  | { type: 'START_SESSION'; payload: { subjectId?: string; subjectName?: string } }
-  | { type: 'END_SESSION'; payload: { notes?: string } }
-  | { type: 'LOAD_STATE'; payload: AppState }
-  | { type: 'DELETE_SESSION'; payload: { id: string } };
-
-// Reducer logic
-export function reducer(state: AppState, action: Action): AppState {
+// Define the reducer function
+export default function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
-    // Add a new study subject
-    case 'ADD_SUBJECT': {
-      return { ...state, subjects: [action.payload, ...state.subjects] };
-    }
 
-    // Start a new study session
+    // -----------------------------------------------------
+    // 1. START_SESSION
+    // -----------------------------------------------------
     case 'START_SESSION': {
-      const id = uuidv4(); // Generate unique session ID
-      const session: StudySession = {
-        id,
-        subjectId: action.payload.subjectId ?? null,
-        subjectName: action.payload.subjectName,
-        start: new Date().toISOString(), // record current time
+      // Create a new session with only a start time for now
+      const newSession = {
+        id: Date.now().toString(),  // Unique identifier
+        start: action.payload.start // Start timestamp
       };
-      // Save to session list and mark as active
-      return { ...state, sessions: [session, ...state.sessions], activeSessionId: id };
+
+      // Return new state with session added to the array
+      return {
+        ...state,
+        sessions: [...state.sessions, newSession]
+      };
     }
 
-    // End the current active study session
-    case 'END_SESSION': {
-      if (!state.activeSessionId) return state;
-
-      const sessions = state.sessions.map(s => {
-        if (s.id !== state.activeSessionId) return s;
-
-        // Calculate session duration in minutes
-        const end = new Date().toISOString();
-        const durationMins = Math.round(
-          (new Date(end).getTime() - new Date(s.start).getTime()) / 60000
-        );
-
-        return { ...s, end, durationMins, notes: action.payload.notes ?? s.notes };
+    // -----------------------------------------------------
+    // 2. STOP_SESSION
+    // -----------------------------------------------------
+    case 'STOP_SESSION': {
+      // Find the most recent session that doesn’t have an end time
+      const updatedSessions = state.sessions.map(session => {
+        if (!session.end) {
+          return {
+            ...session,
+            end: action.payload.end,
+            durationMins: action.payload.durationMins
+          };
+        }
+        return session;
       });
 
-      return { ...state, sessions, activeSessionId: undefined };
+      // Return new state with updated sessions
+      return {
+        ...state,
+        sessions: updatedSessions
+      };
     }
 
-    // Load saved state from storage
-    case 'LOAD_STATE':
+    // -----------------------------------------------------
+    // 3. LOAD_STATE
+    // -----------------------------------------------------
+    case 'LOAD_STATE': {
+      // Replace entire app state (used for loading saved data)
       return action.payload;
+    }
 
-    // Remove a session from history
-    case 'DELETE_SESSION':
-      return { ...state, sessions: state.sessions.filter(s => s.id !== action.payload.id) };
-
+    // -----------------------------------------------------
+    // Default case
+    // -----------------------------------------------------
     default:
       return state;
   }

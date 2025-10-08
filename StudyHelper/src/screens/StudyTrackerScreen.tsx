@@ -3,11 +3,11 @@
 
 import React, { useContext, useState, useEffect } from 'react';
 import { View, Text, Button, StyleSheet, TextInput } from 'react-native';
-import { StudyContext } from '../context/StudyContext';
+import { useStudyContext } from '../context/StudyContext';
 import { format } from 'date-fns';
 
 export default function StudyTrackerScreen() {
-  const { state, dispatch } = useContext(StudyContext);
+  const { state, dispatch } = useContext(useStudyContext);
 
   // Get the currently active study session
   const activeSession = state.sessions.find((s: { id: any; }) => s.id === state.activeSessionId);

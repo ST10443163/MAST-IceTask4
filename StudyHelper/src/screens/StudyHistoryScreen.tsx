@@ -3,11 +3,11 @@
 
 import React, { useContext } from 'react';
 import { View, Text, FlatList, Button, StyleSheet } from 'react-native';
-import { StudyContext } from '../context/StudyContext';
+import { useStudyContext } from '../context/StudyContext';
 import { format } from 'date-fns';
 
 export default function StudyHistoryScreen() {
-  const { state, dispatch } = useContext(StudyContext);
+  const { state, dispatch } = useContext(useStudyContext);
 
   return (
     <View style={{ flex: 1 }}>
